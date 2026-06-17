@@ -10,16 +10,63 @@ permissions:
 
 jobs:
   release:
-    name: Build & publish
+    name: Build, sign, notarize & publish
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
 
+      # Import the Developer ID Application certificate into a throwaway
+      # keychain so codesign can find it. Skipped automatically if the
+      # MACOS_CERT_P12 secret is absent (build falls back to ad-hoc).
+      - name: Import signing certificate
+        if: ${{ secrets.MACOS_CERT_P12 != '' }}
+        env:
+          MACOS_CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
+          MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+          KEYCHAIN_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+        run: |
+          CERT_PATH="$RUNNER_TEMP/cert.p12"
+          KEYCHAIN_PATH="$RUNNER_TEMP/build.keychain-db"
+          echo "$MACOS_CERT_P12" | base64 --decode > "$CERT_PATH"
+          security create-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security set-keychain-settings -lut 21600 "$KEYCHAIN_PATH"
+          security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security import "$CERT_PATH" -P "$MACOS_CERT_PASSWORD" \
+            -t cert -f pkcs12 -k "$KEYCHAIN_PATH" \
+            -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: \
+            -s -k "$KEYCHAIN_PASSWORD" "$KEYCHAIN_PATH"
+          security list-keychains -d user -s "$KEYCHAIN_PATH" $(security list-keychains -d user | tr -d '"')
+
       - name: Build
+        env:
+          SIGN_IDENTITY: ${{ secrets.MACOS_SIGN_IDENTITY }}
         run: |
           cd app
           chmod +x build.sh
           CI=true ./build.sh
+
+      # Notarize with an App Store Connect API key. Skipped if secrets absent.
+      - name: Notarize & staple
+        if: ${{ secrets.AC_API_KEY_ID != '' }}
+        env:
+          AC_API_KEY_ID: ${{ secrets.AC_API_KEY_ID }}
+          AC_API_ISSUER_ID: ${{ secrets.AC_API_ISSUER_ID }}
+          AC_API_KEY_P8: ${{ secrets.AC_API_KEY_P8 }}
+        run: |
+          KEY_PATH="$RUNNER_TEMP/AuthKey.p8"
+          echo "$AC_API_KEY_P8" | base64 --decode > "$KEY_PATH"
+          cd app/build
+          # notarytool needs a zip of the .app to submit.
+          ditto -c -k --keepParent SparkBar.app notarize.zip
+          xcrun notarytool submit notarize.zip \
+            --key "$KEY_PATH" \
+            --key-id "$AC_API_KEY_ID" \
+            --issuer "$AC_API_ISSUER_ID" \
+            --wait
+          # Staple the ticket so the app validates offline.
+          xcrun stapler staple SparkBar.app
+          rm -f notarize.zip
 
       - name: Package .app as zip
         run: |
@@ -36,7 +83,10 @@ jobs:
             ### Install
 
             1. Download `SparkBar.zip` below and unzip it.
-            2. Move **SparkBar.app** to `/Applications`.
-            3. The app is ad-hoc signed, so on first launch **right-click → Open**
-               to clear Gatekeeper.
+            2. Move **SparkBar.app** to `/Applications` and open it.
+            3. On first launch SparkBar may ask permission to read the
+               Claude Code login keychain item — click **Allow**.
             4. Make sure you're logged in to Claude Code (`claude login`).
+
+            This build is signed with a Developer ID and notarized by Apple,
+            so it opens with a normal double-click.

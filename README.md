@@ -51,9 +51,10 @@ brew install --cask hokore-dev/tap/sparkbar
 ### Download
 
 Grab the latest `SparkBar.zip` from the [**Releases**](https://github.com/Hokore-Dev/sparkbar/releases)
-page, unzip it, and move **SparkBar.app** to `/Applications`. Because the
-app is ad-hoc signed, the first launch needs a **right-click → Open** to clear
-Gatekeeper.
+page, unzip it, and move **SparkBar.app** to `/Applications`. Release builds are
+signed with a Developer ID and notarized by Apple, so a normal double-click
+opens them. On first launch SparkBar may ask permission to read the Claude Code
+login keychain item — click **Allow**.
 
 ### Build from source
 

@@ -46,11 +46,23 @@ lipo -create -output "$APP_PATH/Contents/MacOS/SparkBar" \
 rm "$APP_PATH/Contents/MacOS/SparkBar_arm64" "$APP_PATH/Contents/MacOS/SparkBar_x86_64"
 chmod 755 "$APP_PATH/Contents/MacOS/SparkBar"
 
-# Strip detritus that codesign rejects, then ad-hoc sign.
+# Strip detritus that codesign rejects, then sign.
 xattr -cr "$APP_PATH"
 find "$APP_PATH" -name '._*' -delete 2>/dev/null || true
 find "$APP_PATH" -name '.DS_Store' -delete 2>/dev/null || true
-codesign --force --deep --sign - "$APP_PATH"
+
+# If SIGN_IDENTITY is set (e.g. "Developer ID Application: Name (TEAMID)"),
+# sign with Hardened Runtime + entitlements so the build can be notarized.
+# Otherwise fall back to an ad-hoc signature for local/dev use.
+if [ -n "$SIGN_IDENTITY" ]; then
+    echo "Signing with Developer ID: $SIGN_IDENTITY"
+    codesign --force --deep --options runtime --timestamp \
+        --entitlements entitlements.plist \
+        --sign "$SIGN_IDENTITY" "$APP_PATH"
+else
+    echo "Ad-hoc signing (no SIGN_IDENTITY set)"
+    codesign --force --deep --sign - "$APP_PATH"
+fi
 codesign --verify --verbose=2 "$APP_PATH"
 
 echo "Build successful: $APP_PATH"
