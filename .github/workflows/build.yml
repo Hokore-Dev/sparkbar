@@ -11,7 +11,7 @@ jobs:
     name: Build (universal, ad-hoc signed)
     runs-on: macos-15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Show toolchain
         run: swift --version
