@@ -1,0 +1,19 @@
+# macOS
+.DS_Store
+._*
+
+# Build artifacts
+app/build/
+*.dmg
+*.zip
+
+# Icon generation
+*.iconset/
+
+# IDE / Editors
+.vscode/
+.idea/
+*.xcodeproj/
+
+# Claude
+.claude/

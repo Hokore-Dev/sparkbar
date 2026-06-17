@@ -1,0 +1,56 @@
+name: 🐛 Bug Report
+description: Something isn't working as expected.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for taking the time to file a bug! Please fill in the details below.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug and what you expected instead.
+      placeholder: When I open the menu, the usage shows 0% even though…
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Launch SparkBar
+        2. Click the menu bar icon
+        3. …
+    validations:
+      required: true
+  - type: input
+    id: macos-version
+    attributes:
+      label: macOS version
+      placeholder: "e.g. 14.5 (Sonoma)"
+    validations:
+      required: true
+  - type: input
+    id: app-version
+    attributes:
+      label: SparkBar version
+      description: See Settings → footer, or the build you compiled.
+      placeholder: "e.g. 1.0.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: claude-login
+    attributes:
+      label: Are you logged in to Claude Code?
+      description: The app reads the token created by `claude login`.
+      options:
+        - "Yes — `claude` works in my terminal"
+        - "No / not sure"
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant logs
+      description: "Optional. Run `log show --predicate 'process == \"SparkBar\"' --last 10m` and paste anything relevant."
+      render: shell

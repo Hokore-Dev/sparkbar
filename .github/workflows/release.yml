@@ -1,0 +1,42 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & publish
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: |
+          cd app
+          chmod +x build.sh
+          CI=true ./build.sh
+
+      - name: Package .app as zip
+        run: |
+          cd app/build
+          ditto -c -k --keepParent SparkBar.app SparkBar.zip
+          shasum -a 256 SparkBar.zip
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: app/build/SparkBar.zip
+          generate_release_notes: true
+          body: |
+            ### Install
+
+            1. Download `SparkBar.zip` below and unzip it.
+            2. Move **SparkBar.app** to `/Applications`.
+            3. The app is ad-hoc signed, so on first launch **right-click → Open**
+               to clear Gatekeeper.
+            4. Make sure you're logged in to Claude Code (`claude login`).

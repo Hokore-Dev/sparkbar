@@ -1,0 +1,30 @@
+name: Build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build (universal, ad-hoc signed)
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Show toolchain
+        run: swift --version
+
+      - name: Build
+        run: |
+          cd app
+          chmod +x build.sh
+          CI=true ./build.sh
+
+      - name: Verify universal binary
+        run: |
+          BIN=app/build/SparkBar.app/Contents/MacOS/SparkBar
+          lipo -archs "$BIN"
+          lipo -archs "$BIN" | grep -q arm64
+          lipo -archs "$BIN" | grep -q x86_64

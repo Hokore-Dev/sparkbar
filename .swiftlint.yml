@@ -1,0 +1,23 @@
+# SwiftLint configuration — lenient, tuned for a small SwiftUI/AppKit app.
+# Runs non-strict in CI: warnings are informational and do not fail the build.
+
+included:
+  - app/Sources
+
+line_length:
+  warning: 120
+  ignores_comments: true
+
+identifier_name:
+  min_length: 2
+  excluded: [id, x, y]
+
+disabled_rules:
+  - todo
+  - trailing_comma
+
+opt_in_rules:
+  - empty_count
+  - closure_spacing
+  - first_where
+  - sorted_first_last

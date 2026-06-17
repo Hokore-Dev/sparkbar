@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Questions & Discussions
+    url: https://github.com/Hokore-Dev/sparkbar/discussions
+    about: Ask a question, share an idea, or get help.
+  - name: ❤️ Sponsor this project
+    url: https://github.com/sponsors/Hokore-Dev
+    about: If SparkBar is useful to you, consider supporting its development.
